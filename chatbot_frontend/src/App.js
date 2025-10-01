@@ -1,47 +1,93 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import './index.css';
+import { sendMessage } from './services/api';
+import ChatMessage from './components/ChatMessage';
+import TopNav from './components/TopNav';
+import ChatInput from './components/ChatInput';
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  /** Main React component that renders:
+   * - Top navigation bar
+   * - Scrollable chat window with bubbles
+   * - Fixed input at the bottom
+   * Handles communication with backend via REST.
+   */
+  const [messages, setMessages] = useState([
+    { id: 'sys-1', role: 'assistant', content: "Hello! I'm your AI assistant. How can I help you today?" }
+  ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const scrollRef = useRef(null);
 
-  // Effect to apply theme to document element
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    // Auto-scroll to bottom when messages change
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  const handleSend = async (text) => {
+    /** Sends a user message to the backend and appends assistant response. */
+    if (!text || loading) return;
+
+    setError('');
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: text
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setLoading(true);
+    try {
+      // Expecting backend to respond with: { reply: "..." }
+      const resp = await sendMessage(text);
+      const assistantText = resp?.reply ?? 'Sorry, I did not understand that.';
+      const assistantMsg = {
+        id: `asst-${Date.now()}`,
+        role: 'assistant',
+        content: assistantText
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (e) {
+      console.error(e);
+      setError('Failed to reach the chatbot. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="ocean-app">
+      <TopNav title="Ocean Chatbot" subtitle="Your AI assistant" />
+      <main className="chat-shell">
+        <div className="chat-gradient" />
+        <div className="chat-container">
+          <div className="chat-window" ref={scrollRef} role="log" aria-live="polite">
+            {messages.map(m => (
+              <ChatMessage key={m.id} role={m.role} content={m.content} />
+            ))}
+            {loading && (
+              <div className="typing">
+                <span className="dot" />
+                <span className="dot" />
+                <span className="dot" />
+              </div>
+            )}
+            {error && (
+              <div className="error-banner" role="alert">
+                {error}
+              </div>
+            )}
+          </div>
+          <ChatInput onSend={handleSend} disabled={loading} />
+        </div>
+      </main>
+      <footer className="footer-note">
+        Built with Ocean Professional theme
+      </footer>
     </div>
   );
 }
