@@ -1,0 +1,4 @@
+{
+    "command": "npm install",
+    "working_directory": "/home/kavia/workspace/code-generation/openai-chatbot-web-application-3147-3156/chatbot_frontend"
+}
