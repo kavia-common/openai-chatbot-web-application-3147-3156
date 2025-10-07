@@ -1,0 +1,8 @@
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,rgba(37,99,235,0.1),#f9fafb);border-bottom:1px solid #e5e7eb}
+.navbar__brand{display:flex;gap:8px;align-items:center}
+.navbar__logo{font-size:20px}
+.navbar__title{font-weight:600;color:#111827}
+.navbar__toggle{background:#2563EB;color:#fff;border:none;border-radius:8px;padding:8px 10px;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,.25)}
+.navbar__toggle:hover{filter:brightness(0.95)}
+[data-theme="dark"] .navbar{background:linear-gradient(90deg,rgba(37,99,235,0.15),#111827);border-color:#1f2937}
+[data-theme="dark"] .navbar__title{color:#f9fafb}
