@@ -2,7 +2,8 @@
 
 A minimal FastAPI backend that supports CORS for a React frontend and exposes:
 - GET /health
-- POST /messages
+- POST /chat (primary)
+- POST /messages (legacy alias to /chat)
 
 It accepts a JSON payload `{"message": string}` and returns `{"reply": string}`.
 The `/messages` endpoint uses the OpenAI Chat Completions API (non‑streaming) with a system prompt:
@@ -71,7 +72,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 - GET `/health`
   - Response: `{"status": "ok"}`
 
-- POST `/messages`
+- POST `/chat` (preferred)
   - Request: `{"message": "Hello there"}`
   - 400 if message is empty or only whitespace: `{"detail": "Message cannot be empty"}`
   - 503 if OpenAI is not configured or the call fails:
@@ -79,6 +80,8 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
     { "error": { "message": "..." } }
     ```
   - Success Response: `{"reply": "<assistant reply text>"}`
+- POST `/messages` (legacy)
+  - Alias to `/chat` for backward compatibility. Same request/response semantics as `/chat`.
 
 ## Quick verification
 
@@ -90,14 +93,16 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 2) Check it's up:
 ```
 curl -s http://localhost:8000/
-# => {"message":"Chatbot Backend is running","endpoints":["/health","/messages"]}
+# => {"message":"Chatbot Backend is running","endpoints":["/health","/chat","/messages"]}
 ```
 
 3) Test the chat endpoint:
 ```
-curl -i -X POST http://localhost:8000/messages \
+curl -i -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message":"Hello there"}'
+# Legacy alias (still supported):
+# curl -i -X POST http://localhost:8000/messages -H "Content-Type: application/json" -d '{"message":"Hello there"}'
 ```
 
 Expected output (HTTP/1.1 200 and JSON body):

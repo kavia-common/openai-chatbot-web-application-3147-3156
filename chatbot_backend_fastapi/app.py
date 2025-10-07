@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 # Initialize FastAPI app with metadata for API docs
 app = FastAPI(
     title="Chatbot Backend (FastAPI)",
-    description="A minimal FastAPI backend exposing a POST /messages endpoint and CORS enabled for a local React frontend.",
-    version="0.2.0",
+    description="A minimal FastAPI backend exposing a POST /chat endpoint (with legacy /messages alias) and CORS enabled for a local React frontend.",
+    version="0.3.0",
     openapi_tags=[
         {"name": "Health", "description": "Liveness and readiness endpoints."},
         {"name": "Chat", "description": "Endpoints for chat message interaction."},
@@ -61,7 +61,7 @@ def root():
     Returns:
         JSON object with a brief message and available primary endpoints.
     """
-    return {"message": "Chatbot Backend is running", "endpoints": ["/health", "/messages"]}
+    return {"message": "Chatbot Backend is running", "endpoints": ["/health", "/chat", "/messages"]}
 
 # PUBLIC_INTERFACE
 @app.get("/health", tags=["Health"], summary="Health check", description="Returns a simple status payload for liveness/readiness.")
@@ -74,33 +74,9 @@ def health():
     return {"status": "ok"}
 
 
-# PUBLIC_INTERFACE
-@app.post(
-    "/messages",
-    response_model=MessageResponse,
-    tags=["Chat"],
-    summary="Send a chat message",
-    description="Accepts a JSON payload with {'message': string} and returns {'reply': string}.",
-    responses={
-        200: {"description": "Successful response with assistant reply."},
-        400: {"description": "Validation error or empty message.", "content": {"application/json": {}}},
-        503: {"description": "Upstream model service not available or failed.", "content": {"application/json": {}}},
-    },
-)
-def post_message(payload: MessageRequest) -> MessageResponse:
+def _handle_chat(payload: MessageRequest) -> MessageResponse:
     """
-    Chat messages endpoint.
-
-    Parameters:
-        payload: MessageRequest
-            - message: the user's text message; must be non-empty after trimming whitespace.
-
-    Returns:
-        MessageResponse: {"reply": "<assistant reply text>"}
-
-    Raises:
-        HTTPException 400 if message is empty or whitespace only.
-        HTTPException 503 if OpenAI API key is missing or the OpenAI call fails.
+    Shared implementation for chat handling used by both /chat and legacy /messages.
     """
     # Basic validation: non-empty after trimming
     msg = (payload.message or "").strip()
@@ -155,3 +131,47 @@ def post_message(payload: MessageRequest) -> MessageResponse:
             status_code=503,
             detail={"message": f"Failed to get response from OpenAI: {str(e)}"},
         )
+
+# PUBLIC_INTERFACE
+@app.post(
+    "/chat",
+    response_model=MessageResponse,
+    tags=["Chat"],
+    summary="Send a chat message",
+    description="Primary chat endpoint. Accepts a JSON payload with {'message': string} and returns {'reply': string}.",
+    responses={
+        200: {"description": "Successful response with assistant reply."},
+        400: {"description": "Validation error or empty message.", "content": {"application/json": {}}},
+        503: {"description": "Upstream model service not available or failed.", "content": {"application/json": {}}},
+    },
+)
+def post_chat(payload: MessageRequest) -> MessageResponse:
+    """
+    Primary chat endpoint (/chat).
+
+    Parameters:
+        payload: MessageRequest - contains the user's text message.
+
+    Returns:
+        MessageResponse with assistant reply.
+    """
+    return _handle_chat(payload)
+
+# PUBLIC_INTERFACE
+@app.post(
+    "/messages",
+    response_model=MessageResponse,
+    tags=["Chat"],
+    summary="Send a chat message (legacy)",
+    description="Legacy endpoint alias for /chat. Accepts {'message': string} and returns {'reply': string}.",
+    responses={
+        200: {"description": "Successful response with assistant reply."},
+        400: {"description": "Validation error or empty message.", "content": {"application/json": {}}},
+        503: {"description": "Upstream model service not available or failed.", "content": {"application/json": {}}},
+    },
+)
+def post_message(payload: MessageRequest) -> MessageResponse:
+    """
+    Legacy chat endpoint (/messages). Delegates to the primary /chat handler for backward compatibility.
+    """
+    return _handle_chat(payload)
