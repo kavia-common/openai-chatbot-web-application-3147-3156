@@ -8,6 +8,13 @@ Environment config:
 Development:
 - Start frontend preview (port 3000). Ensure backend is running and CORS allows http://localhost:3000.
 
+Using backend on port 8001:
+- To point the frontend to a backend running on http://localhost:8001, set the following in `.env.development`:
+  ```
+  REACT_APP_API_BASE_URL=http://localhost:8001
+  ```
+- After creating or updating `.env.development`, restart the dev server (`npm start`) to pick up the changes.
+
 Endpoints assumed:
 - POST /chat with JSON { message, history? } (primary)
 - Response JSON contains either `reply` or `message.content`.
@@ -17,16 +24,16 @@ Verification / Troubleshooting:
 - Backend base URL defaults to http://localhost:8000 (see src/config.js).
 - To override, create `.env.development` with:
   ```
-  REACT_APP_API_BASE_URL=http://localhost:8000
+  REACT_APP_API_BASE_URL=http://localhost:8001
   ```
 - Test the backend directly (primary endpoint):
   ```
-  curl -i -X POST http://localhost:8000/chat \
+  curl -i -X POST http://localhost:8001/chat \
     -H "Content-Type: application/json" \
     -d '{"message":"hello"}'
   ```
   If this returns 404, restart the backend from its directory with:
-  `uvicorn app:app --host 0.0.0.0 --port 8000 --reload`
+  `uvicorn app:app --host 0.0.0.0 --port 8001 --reload`
 
 Theme:
 - Ocean Professional colors and light/dark toggle in the navbar.

@@ -58,13 +58,19 @@ The `/messages` endpoint uses the OpenAI Chat Completions API (non‑streaming) 
 
 ## Run
 
-From this directory:
+From this directory (default 8000):
 ```
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-- The API will be available at http://localhost:8000
-- Interactive docs at http://localhost:8000/docs
+Alternative (run on port 8001):
+```
+uvicorn app:app --host 0.0.0.0 --port 8001 --reload
+```
+
+- When running on 8001, the frontend should point to http://localhost:8001 (set `REACT_APP_API_BASE_URL` in the frontend `.env.development`).
+- The API will be available at http://localhost:8000 or http://localhost:8001 depending on the chosen port.
+- Interactive docs at /docs (e.g., http://localhost:8001/docs).
 - CORS is enabled for http://localhost:3000 by default so the React app can call it locally.
 
 ## Endpoints
@@ -85,24 +91,27 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 ## Quick verification
 
-1) Start the server from this directory:
+1) Start the server from this directory (choose your port):
 ```
+# Port 8000 (default)
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+# OR Port 8001
+uvicorn app:app --host 0.0.0.0 --port 8001 --reload
 ```
 
-2) Check it's up:
+2) Check it's up (replace PORT with 8000 or 8001):
 ```
-curl -s http://localhost:8000/
+curl -s http://localhost:PORT/
 # => {"message":"Chatbot Backend is running","endpoints":["/health","/chat","/messages"]}
 ```
 
 3) Test the chat endpoint:
 ```
-curl -i -X POST http://localhost:8000/chat \
+curl -i -X POST http://localhost:PORT/chat \
   -H "Content-Type: application/json" \
   -d '{"message":"Hello there"}'
 # Legacy alias (still supported):
-# curl -i -X POST http://localhost:8000/messages -H "Content-Type: application/json" -d '{"message":"Hello there"}'
+# curl -i -X POST http://localhost:PORT/messages -H "Content-Type: application/json" -d '{"message":"Hello there"}'
 ```
 
 Expected output (HTTP/1.1 200 and JSON body):
