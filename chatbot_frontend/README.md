@@ -9,8 +9,9 @@ Development:
 - Start frontend preview (port 3000). Ensure backend is running and CORS allows http://localhost:3000.
 
 Endpoints assumed:
-- POST /messages with JSON { message, history? }
+- POST /chat with JSON { message, history? } (primary)
 - Response JSON contains either `reply` or `message.content`.
+- Note: The backend may also expose POST /messages as a legacy alias to /chat for backward compatibility.
 
 Verification / Troubleshooting:
 - Backend base URL defaults to http://localhost:8000 (see src/config.js).
@@ -18,9 +19,9 @@ Verification / Troubleshooting:
   ```
   REACT_APP_API_BASE_URL=http://localhost:8000
   ```
-- Test the backend directly:
+- Test the backend directly (primary endpoint):
   ```
-  curl -i -X POST http://localhost:8000/messages \
+  curl -i -X POST http://localhost:8000/chat \
     -H "Content-Type: application/json" \
     -d '{"message":"hello"}'
   ```

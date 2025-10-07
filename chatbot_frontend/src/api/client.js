@@ -29,10 +29,11 @@ export async function sendMessage({ message, history = [] }) {
   /** Send a chat message to the backend with optional history; returns { ok, reply, data?, error? } */
   const controller = new AbortController();
   const base = CONFIG.API_BASE_URL.replace(/\/$/, '');
-  const url = `${base}/messages`;
+  // Switch to primary /chat endpoint (legacy /messages still supported on backend)
+  const url = `${base}/chat`;
   const payload = CONFIG.SUPPORTS_HISTORY ? { message, history } : { message };
 
-  // Single-attempt send to the /messages endpoint; retain timeout and defensive parsing
+  // Single-attempt send to the /chat endpoint; retain timeout and defensive parsing
   try {
     const resp = await withTimeout(fetch(url, {
       method: 'POST',
@@ -43,6 +44,7 @@ export async function sendMessage({ message, history = [] }) {
 
     if (!resp.ok) throw new Error(`API error ${resp.status}`);
     const data = await resp.json();
+    // Defensive parsing remains: prefer data.reply, fallback to data.message.content if provided
     const reply = (data && (data.reply || (data.message && data.message.content))) || '';
     if (!reply) throw new Error('Malformed response');
     return { ok: true, reply, data };
