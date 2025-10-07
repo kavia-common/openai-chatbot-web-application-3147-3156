@@ -9,7 +9,7 @@ Development:
 - Start frontend preview (port 3000). Ensure backend is running and CORS allows http://localhost:3000.
 
 Endpoints assumed:
-- POST /chat (or /messages) with JSON { message, history? }
+- POST /messages with JSON { message, history? }
 - Response JSON contains either `reply` or `message.content`.
 
 Theme:

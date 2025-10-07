@@ -29,28 +29,26 @@ export async function sendMessage({ message, history = [] }) {
   /** Send a chat message to the backend with optional history; returns { ok, reply, data?, error? } */
   const controller = new AbortController();
   const base = CONFIG.API_BASE_URL.replace(/\/$/, '');
-  const endpointCandidates = ['/chat', '/messages'];
-  let lastError;
-  for (let i = 0; i < endpointCandidates.length; i++) {
-    const path = endpointCandidates[i];
-    const url = `${base}${path}`;
-    const payload = CONFIG.SUPPORTS_HISTORY ? { message, history } : { message };
-    try {
-      const resp = await withTimeout(fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      }), CONFIG.REQUEST_TIMEOUT_MS, controller);
-      if (!resp.ok) throw new Error(`API error ${resp.status}`);
-      const data = await resp.json();
-      const reply = (data && (data.reply || (data.message && data.message.content))) || '';
-      if (!reply) throw new Error('Malformed response');
-      return { ok: true, reply, data };
-    } catch (e) {
-      lastError = e;
-      await sleep(400); // simple backoff before next candidate/ retry
-    }
+  const url = `${base}/messages`;
+  const payload = CONFIG.SUPPORTS_HISTORY ? { message, history } : { message };
+
+  // Single-attempt send to the /messages endpoint; retain timeout and defensive parsing
+  try {
+    const resp = await withTimeout(fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    }), CONFIG.REQUEST_TIMEOUT_MS, controller);
+
+    if (!resp.ok) throw new Error(`API error ${resp.status}`);
+    const data = await resp.json();
+    const reply = (data && (data.reply || (data.message && data.message.content))) || '';
+    if (!reply) throw new Error('Malformed response');
+    return { ok: true, reply, data };
+  } catch (e) {
+    // small delay for any UI consistency with previous retry pacing
+    await sleep(100);
+    return { ok: false, error: e.message || 'Unknown error' };
   }
-  return { ok: false, error: lastError ? lastError.message : 'Unknown error' };
 }
