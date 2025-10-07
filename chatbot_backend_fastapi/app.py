@@ -54,6 +54,16 @@ def _get_openai_client():
 
 
 # PUBLIC_INTERFACE
+@app.get("/", tags=["Health"], summary="Root info", description="Basic root endpoint to verify server is running.")
+def root():
+    """
+    Root info endpoint.
+    Returns:
+        JSON object with a brief message and available primary endpoints.
+    """
+    return {"message": "Chatbot Backend is running", "endpoints": ["/health", "/messages"]}
+
+# PUBLIC_INTERFACE
 @app.get("/health", tags=["Health"], summary="Health check", description="Returns a simple status payload for liveness/readiness.")
 def health():
     """

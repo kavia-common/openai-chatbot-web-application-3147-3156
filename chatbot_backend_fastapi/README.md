@@ -80,18 +80,38 @@ uvicorn app:app --host 0.0.0.0 --port 8000 --reload
     ```
   - Success Response: `{"reply": "<assistant reply text>"}`
 
-## Example curl
+## Quick verification
 
+1) Start the server from this directory:
 ```
-curl -s -X POST http://localhost:8000/messages \
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+2) Check it's up:
+```
+curl -s http://localhost:8000/
+# => {"message":"Chatbot Backend is running","endpoints":["/health","/messages"]}
+```
+
+3) Test the chat endpoint:
+```
+curl -i -X POST http://localhost:8000/messages \
   -H "Content-Type: application/json" \
   -d '{"message":"Hello there"}'
 ```
 
-Expected output:
+Expected output (HTTP/1.1 200 and JSON body):
 ```
+HTTP/1.1 200 OK
+...
 {"reply":"Hello! How can I help you today?"}
 ```
+
+Troubleshooting 404 Not Found:
+- Ensure you are in the chatbot_backend_fastapi directory when starting uvicorn so `app:app` resolves correctly.
+- Ensure the URL is exactly `http://localhost:8000/messages` (no extra base path).
+- Verify route exists in docs at http://localhost:8000/docs (look for POST /messages).
+- If running another instance on port 8000 from a different project, stop it and restart this server.
 
 ## Data Models
 
