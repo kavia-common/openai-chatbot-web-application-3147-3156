@@ -31,7 +31,7 @@ function App() {
   // PUBLIC_INTERFACE
   const handleSend = async (text) => {
     /** Sends a user message to the backend and appends assistant response. */
-    if (!text || loading) return;
+    if (!text || loading) return; // prevent double send while loading
 
     setError('');
     const userMsg = {
@@ -42,18 +42,22 @@ function App() {
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
     try {
-      // Expecting backend to respond with: { reply: "..." }
+      // Expecting backend to respond with: { reply: "...", used_model?: "..." }
       const resp = await sendMessage(text);
       const assistantText = resp?.reply ?? 'Sorry, I did not understand that.';
+      const modelSuffix = resp?.used_model ? `\n\n— Assistant • ${resp.used_model}` : '';
       const assistantMsg = {
         id: `asst-${Date.now()}`,
         role: 'assistant',
-        content: assistantText
+        // Annotate message with used model as lightweight metadata, preserving layout
+        content: `${assistantText}${modelSuffix}`
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (e) {
       console.error(e);
-      setError('Failed to reach the chatbot. Please try again.');
+      // Show specific backend error text if available
+      const msg = e?.message || 'Failed to reach the chatbot. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -70,7 +74,7 @@ function App() {
               <ChatMessage key={m.id} role={m.role} content={m.content} />
             ))}
             {loading && (
-              <div className="typing">
+              <div className="typing" aria-label="Assistant is typing">
                 <span className="dot" />
                 <span className="dot" />
                 <span className="dot" />
